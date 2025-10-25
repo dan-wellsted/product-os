@@ -1,0 +1,38 @@
+<h2>Edit Experiment</h2>
+<p><a href="/projects/<%= project.id %>" class="btn-outline">← Back</a></p>
+
+<form method="post" action="/projects/<%= project.id %>/experiments/<%= experiment.id %>/update"
+      style="display:grid; gap:.75rem; max-width:700px;">
+  <div style="display:flex; gap:.5rem;">
+    <label>Opportunity
+      <select name="opportunityId" required style="padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+        <% opportunities.forEach(op => { %>
+          <option value="<%= op.id %>" <%= experiment.opportunityId===op.id?'selected':'' %>><%= op.title %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Status
+      <select name="status" style="padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+        <option <%= experiment.status==='PLANNED'?'selected':'' %>>PLANNED</option>
+        <option <%= experiment.status==='RUNNING'?'selected':'' %>>RUNNING</option>
+        <option <%= experiment.status==='SUCCEEDED'?'selected':'' %>>SUCCEEDED</option>
+        <option <%= experiment.status==='FAILED'?'selected':'' %>>FAILED</option>
+      </select>
+    </label>
+  </div>
+  <label>Hypothesis
+    <input name="hypothesis" value="<%= experiment.hypothesis %>" required
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Method
+    <input name="method" value="<%= experiment.method || '' %>"
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Result
+    <textarea name="result" rows="3" style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;"><%= experiment.result || '' %></textarea>
+  </label>
+  <div>
+    <button class="btn">Save</button>
+    <button formaction="/projects/<%= project.id %>/experiments/<%= experiment.id %>/delete" class="btn-outline" style="margin-left:.5rem;">Delete</button>
+  </div>
+</form>

@@ -1,0 +1,30 @@
+<h2>Edit Insight</h2>
+<p><a href="/projects/<%= project.id %>" class="btn-outline">← Back</a></p>
+
+<form method="post" action="/projects/<%= project.id %>/insights/<%= insight.id %>/update"
+      style="display:grid; gap:.75rem; max-width:700px;">
+  <label>Title
+    <input name="title" value="<%= insight.title %>" required
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Summary
+    <textarea name="summary" rows="3" style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;"><%= insight.summary %></textarea>
+  </label>
+  <div style="display:flex; gap:.5rem;">
+    <label>Impact
+      <input type="number" name="impactScore" min="0" max="10" step="1" value="<%= insight.impactScore %>"
+             style="padding:.5rem; border:1px solid #ccc; border-radius:8px; width:120px;">
+    </label>
+    <label>Confidence
+      <select name="confidence" style="padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+        <option <%= insight.confidence==='LOW'?'selected':'' %>>LOW</option>
+        <option <%= insight.confidence==='MEDIUM'?'selected':'' %>>MEDIUM</option>
+        <option <%= insight.confidence==='HIGH'?'selected':'' %>>HIGH</option>
+      </select>
+    </label>
+  </div>
+  <div>
+    <button class="btn">Save</button>
+    <button formaction="/projects/<%= project.id %>/insights/<%= insight.id %>/delete" class="btn-outline" style="margin-left:.5rem;">Delete</button>
+  </div>
+</form>

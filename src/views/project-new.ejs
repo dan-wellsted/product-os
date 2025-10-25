@@ -1,0 +1,16 @@
+<h2>Create a Project</h2>
+<form method="post" action="/projects" style="display:grid; gap:0.75rem; max-width:480px;">
+  <label>Project name
+    <input name="name" required style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Organization (optional)
+    <input name="orgName" placeholder="Defaults to ‘Default Org’" style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Description (optional)
+    <textarea name="description" rows="3" style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;"></textarea>
+  </label>
+  <div>
+    <button type="submit" class="btn">Create Project</button>
+    <a href="/projects" class="btn-outline" style="margin-left:1rem;">Cancel</a>
+  </div>
+</form>

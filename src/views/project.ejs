@@ -1,0 +1,54 @@
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+  <h2>Projects</h2>
+  <div>
+    <a href="/projects/new/form" class="btn-outline">+ New Project</a>
+    <button onclick="quickCreate()" class="btn" style="margin-left:.5rem;">Quick Create</button>
+  </div>
+</div>
+
+<% if (!projects.length) { %>
+  <p>No projects yet.</p>
+<% } %>
+
+<ul style="list-style:none; padding:0; margin:0;">
+  <% projects.forEach(p => { %>
+    <li class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+        <div>
+          <strong><%= p.name %></strong><br/>
+          <small><%= p.description || '' %></small>
+        </div>
+        <div style="display:flex; gap:.5rem;">
+          <a class="btn-outline" href="/projects/<%= p.id %>">View</a>
+          <button onclick="runDiscovery('<%= p.id %>')" class="btn">Run Discovery Pulse</button>
+        </div>
+      </div>
+    </li>
+  <% }) %>
+</ul>
+
+<script>
+async function quickCreate(){
+  const res = await fetch('/projects/quick-create', { method: 'POST' });
+  const data = await res.json();
+  if (data?.created) location.reload();
+  else alert('Could not create project');
+}
+async function runDiscovery(projectId){
+  try{
+    const res = await fetch(`/reports/discovery/run/${projectId}`, { method: 'POST' });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(`Request failed: ${res.status}`);
+    }
+    if(data?.queued){
+      alert('Discovery Pulse queued. Opening Reports…');
+      window.location.href = '/reports';
+    }else{
+      alert('Could not queue report.');
+    }
+  }catch(e){
+    alert('Error: ' + (e?.message || e));
+  }
+}
+</script>

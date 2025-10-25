@@ -1,0 +1,1 @@
+Add a small “Documents” feature: Strategy One-Pager and Narrative Roadmap saved as Markdown per project, with AI-assisted draft generation and manual editing. Store in a new Document model; render with markdown-it; keep versions in a simple DocumentVersion table.

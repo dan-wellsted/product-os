@@ -1,0 +1,39 @@
+<h2>Edit Opportunity</h2>
+<p><a href="/projects/<%= project.id %>" class="btn-outline">← Back</a></p>
+
+<form method="post" action="/projects/<%= project.id %>/opportunities/<%= opportunity.id %>/update"
+      style="display:grid; gap:.75rem; max-width:700px;">
+  <label>Title
+    <input name="title" value="<%= opportunity.title %>" required
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Problem
+    <input name="problem" value="<%= opportunity.problem || '' %>"
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <label>Evidence
+    <input name="evidence" value="<%= opportunity.evidence || '' %>"
+           style="width:100%; padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+  </label>
+  <div style="display:flex; gap:.5rem;">
+    <label>Linked outcome
+      <select name="outcomeId" style="padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+        <option value="">—</option>
+        <% outcomes.forEach(o => { %>
+          <option value="<%= o.id %>" <%= opportunity.outcomeId===o.id?'selected':'' %>><%= o.title %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Confidence
+      <select name="confidence" style="padding:.5rem; border:1px solid #ccc; border-radius:8px;">
+        <option <%= opportunity.confidence==='LOW'?'selected':'' %>>LOW</option>
+        <option <%= opportunity.confidence==='MEDIUM'?'selected':'' %>>MEDIUM</option>
+        <option <%= opportunity.confidence==='HIGH'?'selected':'' %>>HIGH</option>
+      </select>
+    </label>
+  </div>
+  <div>
+    <button class="btn">Save</button>
+    <button formaction="/projects/<%= project.id %>/opportunities/<%= opportunity.id %>/delete" class="btn-outline" style="margin-left:.5rem;">Delete</button>
+  </div>
+</form>

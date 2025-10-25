@@ -1,0 +1,16 @@
+<h2>Reports</h2>
+
+<% if (!reports.length) { %>
+  <p>No reports yet. Run a Discovery Pulse from a Project.</p>
+<% } %>
+
+<ul style="list-style:none; padding:0;">
+  <% reports.forEach(r => { %>
+    <li class="card">
+      <a href="/reports/<%= r.id %>"><strong><%= r.title %></strong></a>
+      <div>
+        <small><%= new Date(r.createdAt).toLocaleString() %> — <%= r.type %></small>
+      </div>
+    </li>
+  <% }) %>
+</ul>

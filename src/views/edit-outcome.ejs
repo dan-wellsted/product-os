@@ -1,0 +1,40 @@
+<% /* views/edit-outcome.ejs */ %>
+<div class="card">
+  <h2 style="margin-top:0;">Edit Outcome — <%= project.name %></h2>
+
+  <form method="post" action="/projects/<%= project.id %>/outcomes/<%= outcome.id %>/update">
+    <div style="margin-bottom:.75rem;">
+      <label>Title<br/>
+        <input type="text" name="title" value="<%= outcome.title %>" style="width:100%; padding:.5rem;"/>
+      </label>
+    </div>
+
+    <div style="margin-bottom:.75rem;">
+      <label>Description<br/>
+        <textarea name="description" rows="4" style="width:100%; padding:.5rem;"><%= outcome.description || '' %></textarea>
+      </label>
+    </div>
+
+    <div style="margin-bottom:.75rem;">
+      <label>Target Value (optional)<br/>
+        <input type="number" step="any" name="targetValue" value="<%= outcome.targetValue ?? '' %>" style="width:100%; padding:.5rem;"/>
+      </label>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label>Linked Metric (optional)<br/>
+        <select name="metricId" style="width:100%; padding:.5rem;">
+          <option value="" <%= !outcome.metricId ? 'selected' : '' %> >— None —</option>
+          <% metrics.forEach(m => { %>
+            <option value="<%= m.id %>" <%= outcome.metricId === m.id ? 'selected' : '' %>><%= m.name %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <div>
+      <a href="/projects/<%= project.id %>" class="btn-outline">Cancel</a>
+      <button type="submit" class="btn" style="margin-left:.5rem;">Save</button>
+    </div>
+  </form>
+</div>
