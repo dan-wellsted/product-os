@@ -1,47 +1,21 @@
 {
   "name": "product-os",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "apps/server",
+    "apps/client"
+  ],
   "scripts": {
-    "dev": "node src/server.js",
-    "start": "node src/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.js",
-    "worker:discovery": "node src/queues/workers/discovery.worker.js",
-    "ai:agent": "node tools/agent.js",
-    "ai:agent:apply": "node tools/agent.js --apply",
-    "ai:ticket": "node tools/ticket-runner.js",
-    "lint": "eslint . --ext .js",
-    "format": "prettier --write .",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "type": "module",
-  "dependencies": {
-    "@prisma/client": "^6.18.0",
-    "bullmq": "^5.61.2",
-    "dotenv": "^17.2.3",
-    "ejs": "^3.1.10",
-    "express": "^5.1.0",
-    "express-ejs-layouts": "^2.5.1",
-    "ioredis": "^5.8.2",
-    "markdown-it": "^14.1.0",
-    "markdown-it-link-attributes": "^4.0.1",
-    "morgan": "^1.10.1",
-    "prisma": "^6.18.0",
-    "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "eslint": "^9.38.0",
-    "fast-glob": "^3.3.3",
-    "gray-matter": "^4.0.3",
-    "openai": "^6.7.0",
-    "prettier": "^3.6.2",
-    "jest": "^30.2.0",
-    "supertest": "^7.1.4"
+    "dev": "npm run dev --workspace @product-os/server",
+    "dev:server": "npm run dev --workspace @product-os/server",
+    "dev:client": "npm run dev --workspace @product-os/client",
+    "build": "npm run build --workspace @product-os/client",
+    "start": "npm run start --workspace @product-os/server",
+    "test": "npm run test --workspace @product-os/server",
+    "prisma:generate": "npm run prisma:generate --workspace @product-os/server",
+    "prisma:migrate": "npm run prisma:migrate --workspace @product-os/server",
+    "db:seed": "npm run db:seed --workspace @product-os/server",
+    "worker:discovery": "npm run worker:discovery --workspace @product-os/server"
   }
 }

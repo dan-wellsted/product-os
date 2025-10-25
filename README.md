@@ -4,6 +4,7 @@ Product OS is an internal web app that centralizes the **Continuous Discovery** 
 
 - **Discovery Loop:** Outcomes → Opportunities → Experiments → Insights → Metrics
 - **AI Reports:** Discovery Pulse (monthly/weekly), with structured prompts and Markdown output
+- **Discovery Admin:** Admin UI + REST API under /discovery for hypotheses, assumptions, interviews, and experiments
 
 This repo contains a minimal, maintainable Node.js app with:
 
@@ -12,7 +13,7 @@ This repo contains a minimal, maintainable Node.js app with:
 - **Queues:** BullMQ + Redis (jobs + optional scheduling)
 - **AI:** OpenAI Chat Completions → JSON → Markdown
 - **Auth:** (placeholder; planned: Google OAuth / Magic Link)
-- **Frontend:** Lightweight server-side pages (EJS). Tiny Vite client is optional and not required to run.
+- **Frontend:** React (Vite SPA) served separately from the Express API.
 
 ---
 
@@ -30,43 +31,26 @@ This repo contains a minimal, maintainable Node.js app with:
 ## Project Structure
 
 ```
-src/
-  app.js
-  server.js
-  db/
-    prisma.js
-  routes/
-    index.js
-    projects.routes.js
-    reports.routes.js
-  controllers/
-    projects.controller.js
-    reports.controller.js
-  services/
-    ai/
-      openai.js
-    prompts/
-      discoveryPulse.js
-    reports.service.js
-    schedule.service.js
-  queues/
-    connection.js
-    discovery.queue.js
-  workers/
-    discovery.worker.js
-  views/
-    layout.ejs
-    index.ejs
-    project.ejs
-    project-new.ejs
-    project-detail.ejs
-    report.ejs
-    reports-list.ejs
-
-prisma/
-  schema.prisma
-  seed.js
-.env
+apps/
+  server/
+    src/
+      app.js
+      server.js
+      routes/
+      controllers/
+      services/
+      queues/
+      views/
+      db/
+    prisma/
+      schema.prisma
+      seed.js
+    __tests__/
+  client/
+    src/
+      main.js
+      style.css
+    vite.config.js
 ```
 
 ---
@@ -103,16 +87,15 @@ postgresql://postgres:YOURPASS@127.0.0.1:5432/product_os?schema=public
 npm install
 ```
 
-Create `prisma/.env` (Prisma reads this first) and `.env` (app reads this).  
-Both can be identical for local:
+Create environment files inside `apps/server/` (Prisma loads from `apps/server/prisma/.env`, the app loads from `apps/server/.env`). Both can share the same values locally:
 
-**`prisma/.env`**
+**`apps/server/prisma/.env`**
 
 ```ini
 DATABASE_URL="postgresql://postgres@127.0.0.1:5432/product_os?schema=public"
 ```
 
-**`.env`**
+**`apps/server/.env`**
 
 ```makefile
 PORT=3000
@@ -139,15 +122,15 @@ launchctl unsetenv DIRECT_URL 2>/dev/null || true
 ## Database: Generate, Migrate, Seed
 
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init --schema prisma/schema.prisma
+npm run prisma:generate
+npm run prisma:migrate -- --name init
 npm run db:seed
 ```
 
 **Quick checks:**
 
 ```bash
-npx prisma -v
+npm exec --workspace @product-os/server prisma -v
 psql "postgresql://postgres@127.0.0.1:5432/product_os" -c "\dt"
 ```
 
@@ -155,19 +138,28 @@ psql "postgresql://postgres@127.0.0.1:5432/product_os" -c "\dt"
 
 ## Run the App
 
-### Terminal A — Web Server
+### Terminal A — Express API & SSR
 
 ```bash
-npm run dev
+npm run dev:server
 # http://localhost:3000
 ```
 
-### Terminal B — Worker
+### Terminal B — Vite Client (optional, for live CSS/JS tweaks)
+
+```bash
+npm run dev:client
+# http://localhost:5173
+```
+
+### Terminal C — Worker
 
 ```bash
 npm run worker:discovery
 # processes AI report jobs via Redis
 ```
+
+> Tip: In production run `npm run build` to produce the client bundle, then `npm run start` to boot the server with the prebuilt assets.
 
 ---
 
