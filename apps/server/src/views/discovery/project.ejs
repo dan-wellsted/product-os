@@ -1,0 +1,611 @@
+<div class="container discovery">
+  <a class="btn-outline" href="/discovery">← All projects</a>
+  <h1><%= project.name %></h1>
+  <p class="muted"><%= project.description || 'Continuous Discovery workspace' %></p>
+
+  <nav class="tab-bar">
+    <a href="#hypotheses">Hypotheses</a>
+    <a href="#assumptions">Assumptions</a>
+    <a href="#interviews">Interviews</a>
+    <a href="#insights">Insights</a>
+    <a href="#opportunities">Opportunities</a>
+    <a href="#solutions">Solutions</a>
+    <a href="#experiments">Experiments</a>
+    <a href="#evidence">Evidence</a>
+    <a href="#traces">Trace Log</a>
+  </nav>
+
+  <section id="hypotheses" class="card">
+    <h2>Top-Down: Outcomes → Hypotheses</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/hypotheses" class="stack">
+      <div class="form-grid">
+        <label>Outcome
+          <select name="outcomeId" required>
+            <option value="">Select outcome</option>
+            <% outcomes.forEach(o => { %>
+              <option value="<%= o.id %>"><%= o.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Hypothesis Title
+          <input name="title" required />
+        </label>
+        <label>Status
+          <input name="status" value="ACTIVE" />
+        </label>
+      </div>
+      <label>Statement
+        <textarea name="statement" rows="2" placeholder="We believe…"></textarea>
+      </label>
+      <button class="btn">Create Hypothesis</button>
+    </form>
+
+    <div class="list">
+      <% hypotheses.forEach(h => { %>
+        <details class="item">
+          <summary>
+            <strong><%= h.title %></strong>
+            <small>Status: <%= h.status %> • Outcome: <%= h.outcome?.title || '—' %></small>
+          </summary>
+          <p><%= h.statement %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/hypotheses/<%= h.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= h.title %>" required />
+            </label>
+            <label>Statement
+              <textarea name="statement" rows="2"><%= h.statement %></textarea>
+            </label>
+            <label>Status
+              <input name="status" value="<%= h.status %>" />
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/hypotheses/<%= h.id %>/delete" onsubmit="return confirm('Delete hypothesis?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!hypotheses.length) { %>
+        <p class="muted">No hypotheses yet.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="assumptions" class="card">
+    <h2>Hypotheses ↔ Opportunities → Assumptions</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/assumptions" class="stack">
+      <div class="form-grid">
+        <label>Hypothesis (optional)
+          <select name="hypothesisId">
+            <option value="">—</option>
+            <% hypotheses.forEach(h => { %>
+              <option value="<%= h.id %>"><%= h.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Opportunity (optional)
+          <select name="opportunityId">
+            <option value="">—</option>
+            <% opportunities.forEach(o => { %>
+              <option value="<%= o.id %>"><%= o.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Confidence
+          <select name="confidence">
+            <option>LOW</option>
+            <option selected>MEDIUM</option>
+            <option>HIGH</option>
+          </select>
+        </label>
+        <label>Status
+          <input name="status" value="OPEN" />
+        </label>
+      </div>
+      <label>Title
+        <input name="title" required />
+      </label>
+      <label>Statement
+        <textarea name="statement" rows="2"></textarea>
+      </label>
+      <button class="btn">Log Assumption</button>
+    </form>
+
+    <div class="list">
+      <% assumptions.forEach(a => { %>
+        <details class="item">
+          <summary>
+            <strong><%= a.title %></strong>
+            <small>Status: <%= a.status %> • Confidence: <%= a.confidence %></small>
+          </summary>
+          <p><%= a.statement || '' %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/assumptions/<%= a.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= a.title %>" required />
+            </label>
+            <label>Statement
+              <textarea name="statement" rows="2"><%= a.statement || '' %></textarea>
+            </label>
+            <label>Confidence
+              <select name="confidence">
+                <option <%= a.confidence==='LOW' ? 'selected' : '' %>>LOW</option>
+                <option <%= a.confidence==='MEDIUM' ? 'selected' : '' %>>MEDIUM</option>
+                <option <%= a.confidence==='HIGH' ? 'selected' : '' %>>HIGH</option>
+              </select>
+            </label>
+            <label>Status
+              <input name="status" value="<%= a.status %>" />
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/assumptions/<%= a.id %>/delete" onsubmit="return confirm('Delete assumption?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!assumptions.length) { %>
+        <p class="muted">No assumptions logged.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="interviews" class="card">
+    <h2>Bottom-Up: Assumptions → Interviews</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/interviews" class="stack">
+      <div class="form-grid">
+        <label>Assumption (optional)
+          <select name="assumptionId">
+            <option value="">—</option>
+            <% assumptions.forEach(a => { %>
+              <option value="<%= a.id %>"><%= a.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Title
+          <input name="title" required placeholder="Interview with…" />
+        </label>
+        <label>Participant
+          <input name="participant" />
+        </label>
+        <label>Date
+          <input type="datetime-local" name="interviewAt" />
+        </label>
+      </div>
+      <label>Notes
+        <textarea name="notes" rows="2"></textarea>
+      </label>
+      <button class="btn">Add Interview</button>
+    </form>
+
+    <div class="list">
+      <% interviews.forEach(i => { %>
+        <details class="item">
+          <summary>
+            <strong><%= i.title %></strong>
+            <small><%= i.participant || 'Participant n/a' %> • <%= i.interviewAt ? new Date(i.interviewAt).toLocaleString() : 'Unscheduled' %></small>
+          </summary>
+          <p><%= i.notes || '' %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/interviews/<%= i.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= i.title %>" required />
+            </label>
+            <label>Participant
+              <input name="participant" value="<%= i.participant || '' %>" />
+            </label>
+            <label>Date
+              <input type="datetime-local" name="interviewAt" value="<%= i.interviewAt ? new Date(i.interviewAt).toISOString().slice(0,16) : '' %>" />
+            </label>
+            <label>Notes
+              <textarea name="notes" rows="2"><%= i.notes || '' %></textarea>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/interviews/<%= i.id %>/delete" onsubmit="return confirm('Delete interview?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!interviews.length) { %>
+        <p class="muted">No interviews captured.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="insights" class="card">
+    <h2>Interviews → Insights</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/insights" class="stack">
+      <div class="form-grid">
+        <label>Interview (optional)
+          <select name="interviewId">
+            <option value="">—</option>
+            <% interviews.forEach(i => { %>
+              <option value="<%= i.id %>"><%= i.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Title
+          <input name="title" required />
+        </label>
+        <label>Source
+          <input name="source" />
+        </label>
+        <label>Impact Score
+          <input type="number" name="impactScore" value="5" />
+        </label>
+        <label>Confidence
+          <select name="confidence">
+            <option>LOW</option>
+            <option selected>MEDIUM</option>
+            <option>HIGH</option>
+          </select>
+        </label>
+      </div>
+      <label>Summary
+        <textarea name="summary" rows="3" required></textarea>
+      </label>
+      <button class="btn">Capture Insight</button>
+    </form>
+
+    <div class="list">
+      <% insights.forEach(ins => { %>
+        <details class="item">
+          <summary>
+            <strong><%= ins.title %></strong>
+            <small>Impact: <%= ins.impactScore %> • Confidence: <%= ins.confidence %></small>
+          </summary>
+          <p><%= ins.summary %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/insights/<%= ins.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= ins.title %>" required />
+            </label>
+            <label>Summary
+              <textarea name="summary" rows="3"><%= ins.summary %></textarea>
+            </label>
+            <label>Source
+              <input name="source" value="<%= ins.source || '' %>" />
+            </label>
+            <label>Impact Score
+              <input type="number" name="impactScore" value="<%= ins.impactScore %>" />
+            </label>
+            <label>Confidence
+              <select name="confidence">
+                <option <%= ins.confidence==='LOW' ? 'selected' : '' %>>LOW</option>
+                <option <%= ins.confidence==='MEDIUM' ? 'selected' : '' %>>MEDIUM</option>
+                <option <%= ins.confidence==='HIGH' ? 'selected' : '' %>>HIGH</option>
+              </select>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/insights/<%= ins.id %>/delete" onsubmit="return confirm('Delete insight?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!insights.length) { %>
+        <p class="muted">No insights yet.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="opportunities" class="card">
+    <h2>Top & Bottom Merge: Insights → Opportunities</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/opportunities" class="stack">
+      <div class="form-grid">
+        <label>Outcome (optional)
+          <select name="outcomeId">
+            <option value="">—</option>
+            <% outcomes.forEach(o => { %>
+              <option value="<%= o.id %>"><%= o.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Insight (optional)
+          <select name="insightId">
+            <option value="">—</option>
+            <% insights.forEach(ins => { %>
+              <option value="<%= ins.id %>"><%= ins.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Confidence
+          <select name="confidence">
+            <option>LOW</option>
+            <option selected>MEDIUM</option>
+            <option>HIGH</option>
+          </select>
+        </label>
+      </div>
+      <label>Title
+        <input name="title" required />
+      </label>
+      <label>Problem
+        <textarea name="problem" rows="2"></textarea>
+      </label>
+      <label>Evidence
+        <textarea name="evidence" rows="2"></textarea>
+      </label>
+      <button class="btn">Create Opportunity</button>
+    </form>
+
+    <div class="list">
+      <% project.opportunities.forEach(o => { %>
+        <details class="item">
+          <summary>
+            <strong><%= o.title %></strong>
+            <small>Confidence: <%= o.confidence %> • Insight: <%= o.insight?.title || '—' %></small>
+          </summary>
+          <p><em>Problem:</em> <%= o.problem || '—' %></p>
+          <p><em>Evidence:</em> <%= o.evidence || '—' %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/opportunities/<%= o.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= o.title %>" required />
+            </label>
+            <label>Problem
+              <textarea name="problem" rows="2"><%= o.problem || '' %></textarea>
+            </label>
+            <label>Evidence
+              <textarea name="evidence" rows="2"><%= o.evidence || '' %></textarea>
+            </label>
+            <label>Confidence
+              <select name="confidence">
+                <option <%= o.confidence==='LOW' ? 'selected' : '' %>>LOW</option>
+                <option <%= o.confidence==='MEDIUM' ? 'selected' : '' %>>MEDIUM</option>
+                <option <%= o.confidence==='HIGH' ? 'selected' : '' %>>HIGH</option>
+              </select>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/opportunities/<%= o.id %>/delete" onsubmit="return confirm('Delete opportunity?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!project.opportunities.length) { %>
+        <p class="muted">No opportunities captured.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="solutions" class="card">
+    <h2>Opportunities → Solutions</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/solutions" class="stack">
+      <div class="form-grid">
+        <label>Opportunity
+          <select name="opportunityId" required>
+            <% opportunities.forEach(o => { %>
+              <option value="<%= o.id %>"><%= o.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Assumption (optional)
+          <select name="assumptionId">
+            <option value="">—</option>
+            <% assumptions.forEach(a => { %>
+              <option value="<%= a.id %>"><%= a.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Title
+          <input name="title" required />
+        </label>
+      </div>
+      <label>Description
+        <textarea name="description" rows="2"></textarea>
+      </label>
+      <button class="btn">Propose Solution</button>
+    </form>
+
+    <div class="list">
+      <% solutions.forEach(s => { %>
+        <details class="item">
+          <summary>
+            <strong><%= s.title %></strong>
+            <small>Opportunity: <%= s.opportunity?.title || '—' %></small>
+          </summary>
+          <p><%= s.description || '' %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/solutions/<%= s.id %>/update" class="stack">
+            <label>Title
+              <input name="title" value="<%= s.title %>" required />
+            </label>
+            <label>Description
+              <textarea name="description" rows="2"><%= s.description || '' %></textarea>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/solutions/<%= s.id %>/delete" onsubmit="return confirm('Delete solution?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!solutions.length) { %>
+        <p class="muted">No solutions proposed yet.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="experiments" class="card">
+    <h2>Solutions → Experiments</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/experiments" class="stack">
+      <div class="form-grid">
+        <label>Opportunity
+          <select name="opportunityId" required>
+            <% opportunities.forEach(o => { %>
+              <option value="<%= o.id %>"><%= o.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Solution (optional)
+          <select name="solutionId">
+            <option value="">—</option>
+            <% solutions.forEach(s => { %>
+              <option value="<%= s.id %>"><%= s.title %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <option>PLANNED</option>
+            <option>RUNNING</option>
+            <option>SUCCEEDED</option>
+            <option>FAILED</option>
+          </select>
+        </label>
+      </div>
+      <label>Hypothesis
+        <input name="hypothesis" required placeholder="If we… then…" />
+      </label>
+      <label>Method
+        <textarea name="method" rows="2"></textarea>
+      </label>
+      <label>Result
+        <textarea name="result" rows="2"></textarea>
+      </label>
+      <button class="btn">Create Experiment</button>
+    </form>
+
+    <div class="list">
+      <% experiments.forEach(exp => { %>
+        <details class="item">
+          <summary>
+            <strong><%= exp.hypothesis %></strong>
+            <small>Status: <%= exp.status %> • Opportunity: <%= exp.opportunity?.title || '—' %></small>
+          </summary>
+          <p><em>Method:</em> <%= exp.method || '—' %></p>
+          <p><em>Result:</em> <%= exp.result || '—' %></p>
+          <form method="post" action="/discovery/projects/<%= project.id %>/experiments/<%= exp.id %>/update" class="stack">
+            <label>Hypothesis
+              <input name="hypothesis" value="<%= exp.hypothesis %>" required />
+            </label>
+            <label>Method
+              <textarea name="method" rows="2"><%= exp.method || '' %></textarea>
+            </label>
+            <label>Status
+              <select name="status">
+                <option <%= exp.status==='PLANNED' ? 'selected' : '' %>>PLANNED</option>
+                <option <%= exp.status==='RUNNING' ? 'selected' : '' %>>RUNNING</option>
+                <option <%= exp.status==='SUCCEEDED' ? 'selected' : '' %>>SUCCEEDED</option>
+                <option <%= exp.status==='FAILED' ? 'selected' : '' %>>FAILED</option>
+              </select>
+            </label>
+            <label>Result
+              <textarea name="result" rows="2"><%= exp.result || '' %></textarea>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/experiments/<%= exp.id %>/delete" onsubmit="return confirm('Delete experiment?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!experiments.length) { %>
+        <p class="muted">No experiments recorded.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="evidence" class="card">
+    <h2>Experiments → Evidence</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/evidence" class="stack">
+      <div class="form-grid">
+        <label>Experiment
+          <select name="experimentId" required>
+            <% experiments.forEach(exp => { %>
+              <option value="<%= exp.id %>"><%= exp.hypothesis.slice(0, 70) %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Type
+          <input name="type" required placeholder="metric, note, etc" />
+        </label>
+      </div>
+      <label>Summary
+        <textarea name="summary" rows="2" required></textarea>
+      </label>
+      <label>Details (JSON optional)
+        <textarea name="details" rows="2" placeholder='{"sample":42}'></textarea>
+      </label>
+      <button class="btn">Attach Evidence</button>
+    </form>
+
+    <div class="list">
+      <% evidences.forEach(ev => { %>
+        <details class="item">
+          <summary>
+            <strong><%= ev.type %></strong>
+            <small>Experiment: <%= ev.experiment?.hypothesis || '—' %></small>
+          </summary>
+          <p><%= ev.summary %></p>
+          <% if (ev.details) { %>
+            <pre><%= JSON.stringify(ev.details, null, 2) %></pre>
+          <% } %>
+          <form method="post" action="/discovery/projects/<%= project.id %>/evidence/<%= ev.id %>/update" class="stack">
+            <label>Type
+              <input name="type" value="<%= ev.type %>" required />
+            </label>
+            <label>Summary
+              <textarea name="summary" rows="2"><%= ev.summary %></textarea>
+            </label>
+            <label>Details (JSON optional)
+              <textarea name="details" rows="2"><%= ev.details ? JSON.stringify(ev.details) : '' %></textarea>
+            </label>
+            <button class="btn">Update</button>
+          </form>
+          <form method="post" action="/discovery/projects/<%= project.id %>/evidence/<%= ev.id %>/delete" onsubmit="return confirm('Delete evidence?');">
+            <button class="btn-outline">Delete</button>
+          </form>
+        </details>
+      <% }) %>
+      <% if (!evidences.length) { %>
+        <p class="muted">No evidence attached.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section id="traces" class="card">
+    <h2>Lineage / Trace Log</h2>
+    <form method="post" action="/discovery/projects/<%= project.id %>/traces" class="stack">
+      <div class="form-grid">
+        <label>From Type
+          <input name="fromType" placeholder="INSIGHT" required />
+        </label>
+        <label>From ID
+          <input name="fromId" required />
+        </label>
+        <label>To Type
+          <input name="toType" placeholder="OPPORTUNITY" required />
+        </label>
+        <label>To ID
+          <input name="toId" required />
+        </label>
+      </div>
+      <label>Context
+        <input name="context" placeholder="Optional notes" />
+      </label>
+      <button class="btn">Record Trace</button>
+    </form>
+
+    <table class="table" style="margin-top:1rem;">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% traces.forEach(t => { %>
+          <tr>
+            <td><%= new Date(t.createdAt).toLocaleString() %></td>
+            <td><%= t.fromType %> → <code><%= t.fromId %></code></td>
+            <td><%= t.toType %> → <code><%= t.toId %></code></td>
+            <td><%= t.context || '' %></td>
+          </tr>
+        <% }) %>
+        <% if (!traces.length) { %>
+          <tr><td colspan="4" class="muted">No lineage captured yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </section>
+</div>

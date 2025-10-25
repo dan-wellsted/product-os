@@ -1,5 +1,9 @@
 node_modules
 # Keep environment variables out of version control
 .env
+apps/server/.env
+apps/server/prisma/.env
 
 /generated/prisma
+apps/client/dist
+dist

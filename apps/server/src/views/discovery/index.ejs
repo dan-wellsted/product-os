@@ -1,0 +1,41 @@
+<div class="container">
+  <h1>Continuous Discovery Admin</h1>
+  <p class="muted">Manage top-down and bottom-up discovery artifacts.</p>
+
+  <% if (!projects.length) { %>
+    <p>No projects yet. Create one under <a href="/projects">Projects</a>.</p>
+  <% } else { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Hypotheses</th>
+          <th>Assumptions</th>
+          <th>Interviews</th>
+          <th>Insights</th>
+          <th>Opportunities</th>
+          <th>Solutions</th>
+          <th>Experiments</th>
+          <th>Evidence</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% projects.forEach(p => { %>
+          <tr>
+            <td><strong><%= p.name %></strong></td>
+            <td><%= p._count.hypotheses %></td>
+            <td><%= p._count.assumptions %></td>
+            <td><%= p._count.interviews %></td>
+            <td><%= p._count.insights %></td>
+            <td><%= p._count.opportunities %></td>
+            <td><%= p._count.solutions %></td>
+            <td><%= p._count.experiments %></td>
+            <td><%= p._count.evidences %></td>
+            <td><a class="btn" href="/discovery/projects/<%= p.id %>">Open</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>

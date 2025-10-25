@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title><%= typeof title !== 'undefined' ? title : 'Product OS' %> — Product OS</title>
+  <% if (viteDev) { %>
+    <% if (viteClient) { %><script type="module" src="<%= viteClient %>"></script><% } %>
+    <% if (assetEntry) { %><script type="module" src="<%= assetEntry %>"></script><% } %>
+  <% } else { %>
+    <% (assetCss || []).forEach(function(href){ %><link rel="stylesheet" href="<%= href %>"><% }) %>
+    <% if (assetEntry) { %><script type="module" src="<%= assetEntry %>"></script><% } %>
+  <% } %>
+</head>
+<body>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/projects">Projects</a>
+    <a href="/projects/new/form">New Project</a>
+    <a href="/reports">Reports</a>
+    <a href="/discovery">Discovery Admin</a>
+  </nav>
+  <div><%- body %></div>
+</body>
+</html>

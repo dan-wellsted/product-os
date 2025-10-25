@@ -1,0 +1,38 @@
+{
+  "name": "@product-os/server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.js",
+    "worker:discovery": "node src/queues/workers/discovery.worker.js",
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write .",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "bullmq": "^5.61.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "ioredis": "^5.8.2",
+    "markdown-it": "^14.1.0",
+    "markdown-it-link-attributes": "^4.0.1",
+    "morgan": "^1.10.1",
+    "prisma": "^6.18.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "eslint": "^9.38.0",
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "openai": "^6.7.0",
+    "prettier": "^3.6.2",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
+}
