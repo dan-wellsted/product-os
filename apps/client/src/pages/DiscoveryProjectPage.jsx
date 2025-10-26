@@ -1,6 +1,5 @@
-import React from "react";
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { fetchDiscoveryOverview } from "../api/discovery.js";
 import TabNav from "../components/TabNav.jsx";
 
@@ -18,6 +17,7 @@ const tabs = [
 
 export default function DiscoveryProjectPage() {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("hypotheses");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +43,9 @@ export default function DiscoveryProjectPage() {
     <div className="stack">
       <h1 className="page-title">{data.name}</h1>
       <p className="muted">Continuous Discovery workspace</p>
+      <button className="btn-outline" onClick={() => navigate("/projects")} style={{ width: "fit-content" }}>
+        ← Back to Projects
+      </button>
       <TabNav tabs={tabs} active={activeTab} onSelect={setActiveTab} />
 
       {activeTab === "traces" ? (
@@ -77,13 +80,17 @@ export default function DiscoveryProjectPage() {
         <section className="card">
           <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
           {(sectionData || []).length ? (
-            <ul>
+            <div className="stack">
               {sectionData.map((item) => (
-                <li key={item.id}>
-                  <strong>{item.title || item.type || item.name || item.hypothesis || item.summary}</strong>
-                </li>
+                <article key={item.id} className="panel">
+                  <header style={{ marginBottom: "0.5rem" }}><strong>{item.title || item.type || item.name || item.hypothesis || item.summary}</strong></header>
+                  {item.summary ? <p>{item.summary}</p> : null}
+                  {item.description ? <p>{item.description}</p> : null}
+                  {item.problem ? <p>{item.problem}</p> : null}
+                  {item.context ? <p className="muted">{item.context}</p> : null}
+                </article>
               ))}
-            </ul>
+            </div>
           ) : (
             <p className="muted">No items yet.</p>
           )}

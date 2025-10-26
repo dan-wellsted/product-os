@@ -9,5 +9,5 @@ export function fetchProject(projectId) {
 }
 
 export function fetchProjectDiscovery(projectId) {
-  return get(`/discovery/api/projects/${projectId}/overview`);
+  return get(`/api/projects/${projectId}/discovery`);
 }

@@ -11,7 +11,6 @@ export default function AppLayout() {
           </NavLink>
           <NavLink to="/projects">Projects</NavLink>
           <NavLink to="/reports">Reports</NavLink>
-          <NavLink to="/discovery">Discovery Admin</NavLink>
         </nav>
       </header>
       <main className="app-main">

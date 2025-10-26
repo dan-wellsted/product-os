@@ -1,21 +1,17 @@
 import { get, post, put, del } from "./client.js";
 
-export function fetchDiscoveryProjects() {
-  return get("/discovery/api/projects");
-}
-
 export function fetchDiscoveryOverview(projectId) {
-  return get(`/discovery/api/projects/${projectId}/overview`);
+  return get(`/api/projects/${projectId}/discovery`);
 }
 
 export function createHypothesis(projectId, data) {
-  return post(`/discovery/api/projects/${projectId}/hypotheses`, data);
+  return post(`/api/projects/${projectId}/hypotheses`, data);
 }
 
 export function updateHypothesis(projectId, hypothesisId, data) {
-  return put(`/discovery/api/projects/${projectId}/hypotheses/${hypothesisId}`, data);
+  return put(`/api/projects/${projectId}/hypotheses/${hypothesisId}`, data);
 }
 
 export function deleteHypothesis(projectId, hypothesisId) {
-  return del(`/discovery/api/projects/${projectId}/hypotheses/${hypothesisId}`);
+  return del(`/api/projects/${projectId}/hypotheses/${hypothesisId}`);
 }

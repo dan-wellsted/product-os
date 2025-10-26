@@ -1,4 +1,5 @@
 import { prisma } from "../db/prisma.js";
+import { getProjectDiscoveryContext } from "../services/discovery.service.js";
 
 export async function listProjects(_req, res, next) {
   try {
@@ -45,6 +46,18 @@ export async function getProject(req, res, next) {
         },
       },
     });
+    if (!project) return res.status(404).json({ error: "not_found" });
+    res.json({ project });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+export async function getProjectDiscovery(req, res, next) {
+  try {
+    const { projectId } = req.params;
+    const project = await getProjectDiscoveryContext(projectId);
     if (!project) return res.status(404).json({ error: "not_found" });
     res.json({ project });
   } catch (err) {

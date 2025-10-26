@@ -138,28 +138,24 @@ psql "postgresql://postgres@127.0.0.1:5432/product_os" -c "\dt"
 
 ## Run the App
 
-### Terminal A — Express API & SSR
+### Development
 
 ```bash
-npm run dev:server
-# http://localhost:3000
+npm run dev
+# concurrently runs server (3000) + client (5173)
 ```
 
-### Terminal B — Vite Client (optional, for live CSS/JS tweaks)
+- Server only: `npm run dev:server`
+- Client only: `npm run dev:client`
 
-```bash
-npm run dev:client
-# http://localhost:5173
-```
-
-### Terminal C — Worker
+### Worker
 
 ```bash
 npm run worker:discovery
 # processes AI report jobs via Redis
 ```
 
-> Tip: In production run `npm run build` to produce the client bundle, then `npm run start` to boot the server with the prebuilt assets.
+> Production: run `npm run build` (client bundle) then `npm run start` (Express serving built assets).
 
 ---
 
@@ -264,3 +260,9 @@ npm run db:seed
 - **Docs:** Strategy One-Pager & Narrative Roadmap editor (Markdown)
 - **Charts:** lightweight metrics charts (optionally via tiny Vite front end)
 - **CI/CD:** prisma migrate deploy in pipeline; prod Postgres + Redis (Neon/Supabase, Upstash/Redis Cloud)
+- **Reporting** Remimplement automated report to pull back discovery updates
+- **Discovery AI Helper** RAG powered OpenAi integration to recommend next discovery actions
+- **Implement Confidence Meter** Rules to govern confidence based on evidence type and amount
+
+
+
