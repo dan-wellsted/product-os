@@ -31,7 +31,7 @@ export default function ProjectsPage() {
               <h2>{project.name}</h2>
               <p className="muted">{project.description || "No description"}</p>
               <Link className="btn" to={`/projects/${project.id}`}>
-                View Project
+                Open Workspace
               </Link>
             </section>
           ))}
