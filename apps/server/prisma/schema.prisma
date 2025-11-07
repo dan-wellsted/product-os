@@ -9,312 +9,257 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model OkTest {
-  id String @id @default(cuid())
-}
-
-// --- Enums ---
-enum Role {
-  ADMIN
-  MEMBER
-  VIEWER
-}
-
-enum Confidence {
+enum ConfidenceLevel {
   LOW
   MEDIUM
   HIGH
 }
 
+enum AssumptionCategory {
+  DESIRABILITY
+  VIABILITY
+  FEASIBILITY
+  USABILITY
+}
+
+enum ValidationState {
+  SUPPORTS
+  WEAKENS
+  FALSIFIES
+  INCONCLUSIVE
+}
+
+enum LifecycleStage {
+  DISCOVERED
+  TRIANGULATED
+  VALIDATED
+  INSTITUTIONALIZED
+  OBSOLETE
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+}
+
 enum ExperimentStatus {
   PLANNED
   RUNNING
-  SUCCEEDED
-  FAILED
+  COMPLETE
+  ARCHIVED
 }
 
-enum ReportType {
-  DISCOVERY_PULSE
-  OUTCOME_BRIEF
-  HYPOTHESIS_BATCH
-  PRODUCT_PULSE
-}
-
-enum RunStatus {
-  QUEUED
-  RUNNING
-  FAILED
-  SUCCEEDED
-}
-
-enum DiscoveryNodeType {
-  OUTCOME
-  HYPOTHESIS
-  ASSUMPTION
-  INTERVIEW
-  INSIGHT
-  OPPORTUNITY
-  SOLUTION
-  EXPERIMENT
-  EVIDENCE
-}
-
-// --- Core org models ---
-model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String?
-  imageUrl    String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  memberships Membership[]
-}
-
-model Organization {
-  id          String       @id @default(cuid())
-  name        String
-  domain      String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  projects    Project[]
-  memberships Membership[]
-}
-
-model Membership {
-  userId String
-  orgId  String
-  role   Role         @default(MEMBER)
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  @@id([userId, orgId])
-}
-
-// --- Discovery models ---
-model Project {
-  id            String        @id @default(cuid())
-  orgId         String
-  name          String
-  description   String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  org           Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  outcomes      Outcome[]
-  opportunities Opportunity[]
-  experiments   Experiment[]
-  insights      Insight[]
-  metrics       Metric[]
-  reports       Report[]
-  ReportRun     ReportRun[]
-  hypotheses    Hypothesis[]
-  assumptions   Assumption[]
-  interviews    Interview[]
-  solutions     Solution[]
-  evidences     Evidence[]
-  traces        DiscoveryTrace[]
+enum RelationshipType {
+  OUTCOME_OPPORTUNITY
+  OPPORTUNITY_SOLUTION
+  SOLUTION_ASSUMPTION
+  NODE
 }
 
 model Outcome {
-  id            String        @id @default(cuid())
-  projectId     String
-  title         String
-  description   String?
-  targetValue   Float?
-  metricId      String?
-  status        String        @default("ACTIVE")
-  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  metric        Metric?       @relation(fields: [metricId], references: [id])
-  opportunities Opportunity[]
-  hypotheses    Hypothesis[]
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  metricName     String?
+  metricBaseline Float?
+  metricTarget   Float?
+  ownerId        String?
+  status         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  outcomeOpportunities OutcomeOpportunity[]
+  Hypothesis           Hypothesis[]
+  Insight              Insight[]
+
+  @@index([ownerId])
 }
 
 model Opportunity {
-  id          String       @id @default(cuid())
-  projectId   String
-  outcomeId   String?
-  insightId   String?
-  title       String
-  problem     String?
-  evidence    String?
-  confidence  Confidence   @default(MEDIUM)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  outcome     Outcome?     @relation(fields: [outcomeId], references: [id])
-  insight     Insight?     @relation(fields: [insightId], references: [id])
-  experiments Experiment[]
-  assumptions Assumption[]
-  solutions   Solution[]
-}
+  id          String   @id @default(uuid())
+  description String
+  segment     String?
+  severity    String?
+  status      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-model Experiment {
-  id            String           @id @default(cuid())
-  opportunityId String
-  hypothesis    String
-  method        String?
-  status        ExperimentStatus @default(PLANNED)
-  result        String?
-  opportunity   Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  Project       Project?         @relation(fields: [projectId], references: [id])
-  projectId     String?
-  solutionId    String?
-  solution      Solution?        @relation(fields: [solutionId], references: [id], onDelete: SetNull)
-  evidences     Evidence[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-}
-
-// --- Evidence & Metrics ---
-model Insight {
-  id          String     @id @default(cuid())
-  projectId   String
-  interviewId String?
-  title       String
-  summary     String
-  source      String?
-  impactScore Int        @default(0)
-  confidence  Confidence @default(MEDIUM)
-  createdAt   DateTime   @default(now())
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  interview   Interview? @relation(fields: [interviewId], references: [id], onDelete: SetNull)
-  opportunities Opportunity[]
-}
-
-model Hypothesis {
-  id          String      @id @default(cuid())
-  projectId   String
-  outcomeId   String
-  title       String
-  statement   String
-  status      String      @default("ACTIVE")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  outcome     Outcome     @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
-  assumptions Assumption[]
-}
-
-model Assumption {
-  id            String        @id @default(cuid())
-  projectId     String
-  hypothesisId  String?
-  opportunityId String?
-  title         String
-  statement     String?
-  confidence    Confidence    @default(MEDIUM)
-  status        String        @default("OPEN")
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  hypothesis    Hypothesis?   @relation(fields: [hypothesisId], references: [id], onDelete: SetNull)
-  opportunity   Opportunity?  @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  interviews    Interview[]
-  solutions     Solution[]
-}
-
-model Interview {
-  id           String      @id @default(cuid())
-  projectId    String
-  assumptionId String?
-  title        String
-  participant  String?
-  interviewAt  DateTime?
-  notes        String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assumption   Assumption? @relation(fields: [assumptionId], references: [id], onDelete: SetNull)
-  insights     Insight[]
+  outcomeOpportunities OutcomeOpportunity[]
+  opportunitySolutions OpportunitySolution[]
+  Hypothesis           Hypothesis[]
+  Insight              Insight[]
 }
 
 model Solution {
-  id            String       @id @default(cuid())
-  projectId     String
-  opportunityId String
-  assumptionId  String?
-  title         String
-  description   String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  opportunity   Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  assumption    Assumption?  @relation(fields: [assumptionId], references: [id], onDelete: SetNull)
-  experiments   Experiment[]
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  opportunitySolutions OpportunitySolution[]
+  solutionAssumptions  SolutionAssumption[]
+  Hypothesis           Hypothesis[]
+  Insight              Insight[]
 }
 
-model Evidence {
-  id           String     @id @default(cuid())
-  experimentId String
-  projectId    String
-  type         String
-  summary      String
-  details      Json?
-  createdAt    DateTime   @default(now())
-  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+model Assumption {
+  id        String             @id @default(uuid())
+  statement String
+  category  AssumptionCategory
+  riskLevel ConfidenceLevel?
+  status    String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  solutionAssumptions SolutionAssumption[]
+  hypotheses          Hypothesis[]
+  Insight             Insight[]
+}
+
+model OutcomeOpportunity {
+  id            String  @id @default(uuid())
+  outcomeId     String
+  opportunityId String
+  confidence    Float?
+  notes         String?
+
+  outcome     Outcome      @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  opportunity Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  insights    Insight[]
+  Hypothesis  Hypothesis[]
+
+  @@unique([outcomeId, opportunityId])
+  @@index([opportunityId])
+}
+
+model OpportunitySolution {
+  id            String  @id @default(uuid())
+  opportunityId String
+  solutionId    String
+  confidence    Float?
+  notes         String?
+
+  opportunity Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  solution    Solution     @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  insights    Insight[]
+  Hypothesis  Hypothesis[]
+
+  @@unique([opportunityId, solutionId])
+  @@index([solutionId])
+}
+
+model SolutionAssumption {
+  id           String  @id @default(uuid())
+  solutionId   String
+  assumptionId String
+  confidence   Float?
+  notes        String?
+
+  solution   Solution     @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  assumption Assumption   @relation(fields: [assumptionId], references: [id], onDelete: Cascade)
+  insights   Insight[]
+  Hypothesis Hypothesis[]
+
+  @@unique([solutionId, assumptionId])
+  @@index([assumptionId])
+}
+
+model Hypothesis {
+  id                    String           @id @default(uuid())
+  assumptionId          String?
+  outcomeOpportunityId  String?
+  opportunitySolutionId String?
+  solutionAssumptionId  String?
+  outcomeId             String?
+  opportunityId         String?
+  solutionId            String?
+  statement             String
+  targetType            RelationshipType
+  createdById           String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  assumption          Assumption?          @relation(fields: [assumptionId], references: [id], onDelete: SetNull)
+  outcomeOpportunity  OutcomeOpportunity?  @relation(fields: [outcomeOpportunityId], references: [id], onDelete: SetNull)
+  opportunitySolution OpportunitySolution? @relation(fields: [opportunitySolutionId], references: [id], onDelete: SetNull)
+  solutionAssumption  SolutionAssumption?  @relation(fields: [solutionAssumptionId], references: [id], onDelete: SetNull)
+  outcome             Outcome?             @relation(fields: [outcomeId], references: [id], onDelete: SetNull)
+  opportunity         Opportunity?         @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  solution            Solution?            @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  experiments         Experiment[]
+
+  @@index([assumptionId])
+  @@index([outcomeOpportunityId])
+  @@index([opportunitySolutionId])
+  @@index([solutionAssumptionId])
+  @@index([outcomeId])
+  @@index([opportunityId])
+  @@index([solutionId])
+}
+
+model Experiment {
+  id            String           @id @default(uuid())
+  hypothesisId  String
+  name          String
+  method        String?
+  status        ExperimentStatus @default(PLANNED)
+  startAt       DateTime?
+  endAt         DateTime?
+  resultSummary String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  hypothesis Hypothesis @relation(fields: [hypothesisId], references: [id], onDelete: Cascade)
+  insights   Insight[]
+
+  @@index([hypothesisId])
+}
+
+model Insight {
+  id                    String           @id @default(uuid())
+  experimentId          String
+  relationshipType      RelationshipType
+  outcomeOpportunityId  String?
+  opportunitySolutionId String?
+  solutionAssumptionId  String?
+  outcomeId             String?
+  opportunityId         String?
+  solutionId            String?
+  assumptionId          String?
+  validationState       ValidationState
+  confidenceLevel       ConfidenceLevel  @default(MEDIUM)
+  statement             String
+  evidenceSummary       String
+  sourceTypes           String[]
+  tags                  String[]
+  lifecycleStage        LifecycleStage   @default(DISCOVERED)
+  privacyLevel          PrivacyLevel     @default(INTERNAL)
+  discoveredOn          DateTime?
+  validUntil            DateTime?
+  dedupeHash            String?          @unique
+  createdById           String?
+  reviewedById          String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  experiment          Experiment           @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  outcomeOpportunity  OutcomeOpportunity?  @relation(fields: [outcomeOpportunityId], references: [id], onDelete: SetNull)
+  opportunitySolution OpportunitySolution? @relation(fields: [opportunitySolutionId], references: [id], onDelete: SetNull)
+  solutionAssumption  SolutionAssumption?  @relation(fields: [solutionAssumptionId], references: [id], onDelete: SetNull)
+  outcome             Outcome?             @relation(fields: [outcomeId], references: [id], onDelete: SetNull)
+  opportunity         Opportunity?         @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  solution            Solution?            @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  assumption          Assumption?          @relation(fields: [assumptionId], references: [id], onDelete: SetNull)
 
   @@index([experimentId])
-}
-
-model DiscoveryTrace {
-  id        String             @id @default(cuid())
-  projectId String
-  fromType  DiscoveryNodeType
-  fromId    String
-  toType    DiscoveryNodeType
-  toId      String
-  context   String?
-  createdAt DateTime           @default(now())
-  project   Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId, fromType, fromId])
-  @@index([projectId, toType, toId])
-}
-
-model Metric {
-  id          String           @id @default(cuid())
-  projectId   String
-  name        String
-  unit        String?
-  description String?
-  snapshots   MetricSnapshot[]
-  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  Outcome     Outcome[]
-}
-
-model MetricSnapshot {
-  id       String   @id @default(cuid())
-  metricId String
-  ts       DateTime
-  value    Float
-  note     String?
-  metric   Metric   @relation(fields: [metricId], references: [id], onDelete: Cascade)
-
-  @@index([metricId, ts])
-}
-
-// --- Reports & Runs ---
-model Report {
-  id        String      @id @default(cuid())
-  projectId String
-  type      ReportType
-  title     String
-  contentMd String
-  model     String?
-  createdAt DateTime    @default(now())
-  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  runs      ReportRun[]
-}
-
-model ReportRun {
-  id         String     @id @default(cuid())
-  projectId  String
-  reportId   String?
-  type       ReportType
-  status     RunStatus  @default(QUEUED)
-  error      String?
-  startedAt  DateTime?
-  finishedAt DateTime?
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  report     Report?    @relation(fields: [reportId], references: [id])
+  @@index([outcomeOpportunityId])
+  @@index([opportunitySolutionId])
+  @@index([solutionAssumptionId])
+  @@index([outcomeId])
+  @@index([opportunityId])
+  @@index([solutionId])
+  @@index([assumptionId])
 }

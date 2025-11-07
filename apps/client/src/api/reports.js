@@ -1,9 +1,9 @@
-import { get } from "./client.js";
+import { getJson } from "./httpClient.js";
 
 export function fetchReports() {
-  return get("/api/reports");
+  return getJson("/api/reports");
 }
 
 export function fetchReport(reportId) {
-  return get(`/api/reports/${reportId}`);
+  return getJson(`/api/reports/${reportId}`);
 }
