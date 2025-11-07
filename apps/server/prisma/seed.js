@@ -1,226 +1,288 @@
-import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { config as loadEnv } from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { PrismaClient, RelationshipType, ValidationState, ConfidenceLevel, AssumptionCategory, LifecycleStage } from "@prisma/client";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+loadEnv({ path: path.resolve(__dirname, "../../../.env") });
+loadEnv({ path: path.resolve(__dirname, ".env") });
+
 const prisma = new PrismaClient();
-const daysAgo = (n) => new Date(Date.now() - n * 24 * 3600 * 1000);
 
 async function main() {
-  const org = await prisma.organization.create({
-    data: { name: "Acme Org", domain: "acme.test" },
-  });
-  const user = await prisma.user.create({
-    data: { email: "product@acme.test", name: "Product Lead" },
-  });
-  await prisma.membership.create({ data: { userId: user.id, orgId: org.id } });
+  await prisma.insight.deleteMany();
+  await prisma.experiment.deleteMany();
+  await prisma.hypothesis.deleteMany();
+  await prisma.solutionAssumption.deleteMany();
+  await prisma.opportunitySolution.deleteMany();
+  await prisma.outcomeOpportunity.deleteMany();
+  await prisma.assumption.deleteMany();
+  await prisma.solution.deleteMany();
+  await prisma.opportunity.deleteMany();
+  await prisma.outcome.deleteMany();
 
-  const project = await prisma.project.create({
-    data: {
-      orgId: org.id,
-      name: "Product OS Pilot",
-      description: "Pilot for Continuous Discovery",
-    },
-  });
+  console.log("🌱 Seeding discovery data…");
 
-  const metric = await prisma.metric.create({
-    data: { projectId: project.id, name: "Activation Rate", unit: "%" },
-  });
-  await prisma.metricSnapshot.createMany({
-    data: [
-      { metricId: metric.id, ts: daysAgo(30), value: 38.2 },
-      { metricId: metric.id, ts: daysAgo(0), value: 41.7 },
-    ],
-  });
-
-  const outcome = await prisma.outcome.create({
-    data: {
-      projectId: project.id,
-      title: "Increase activation rate",
-      description: "Improve first-week activation to drive retention",
-      targetValue: 50,
-      metricId: metric.id,
-    },
-  });
-
-  const opportunity = await prisma.opportunity.create({
-    data: {
-      projectId: project.id,
-      outcomeId: outcome.id,
-      title: "Confusing setup flow",
-      problem: "Drop on step 2",
-      evidence: "Analytics + interviews",
-    },
-  });
-
-  await prisma.experiment.create({
-    data: {
-      projectId: project.id,
-      opportunityId: opportunity.id,
-      hypothesis: "Redesign step 2 → +10% activation",
-      method: "prototype-test",
-    },
-  });
-
-  await prisma.insight.createMany({
-    data: [
-      {
-        projectId: project.id,
-        title: "Users want shortcuts",
-        summary: "Speeds up updates",
-        impactScore: 6,
+  const outcomes = await prisma.$transaction([
+    prisma.outcome.create({
+      data: {
+        name: "Increase activation",
+        description: "Help new users reach core value faster",
+        metricName: "Activation rate",
+        metricBaseline: 0.35,
+        metricTarget: 0.5,
       },
-      {
-        projectId: project.id,
-        title: "Drop on step 2",
-        summary: "Period selection confusion",
-        impactScore: 8,
+    }),
+    prisma.outcome.create({
+      data: {
+        name: "Grow weekly retention",
+        description: "Keep teams coming back every week",
+        metricName: "Weekly active accounts",
+        metricBaseline: 420,
+        metricTarget: 600,
       },
-    ],
-  });
+    }),
+  ]);
 
-  const hypothesis = await prisma.hypothesis.create({
-    data: {
-      projectId: project.id,
-      outcomeId: outcome.id,
-      title: "Activation hypothesis",
-      statement: "If we streamline onboarding customers will activate faster",
-    },
-  });
-
-  const assumption = await prisma.assumption.create({
-    data: {
-      projectId: project.id,
-      hypothesisId: hypothesis.id,
-      title: "Value unclear during onboarding",
-      statement: "Prospects need clearer value cues before step 2",
-    },
-  });
-
-  const interview = await prisma.interview.create({
-    data: {
-      projectId: project.id,
-      assumptionId: assumption.id,
-      title: "Interview — Growth PM",
-      participant: "Growth PM",
-      interviewAt: new Date(),
-      notes: "Need to surface value metrics earlier in onboarding.",
-    },
-  });
-
-  const interviewInsight = await prisma.insight.create({
-    data: {
-      projectId: project.id,
-      interviewId: interview.id,
-      title: "Setup confusion stems from unclear value",
-      summary: "Participants are uncertain about success metrics until late in onboarding.",
-      source: "Interview",
-      impactScore: 7,
-      confidence: "MEDIUM",
-    },
-  });
-
-  await prisma.opportunity.update({
-    where: { id: opportunity.id },
-    data: { insightId: interviewInsight.id },
-  });
-
-  const solution = await prisma.solution.create({
-    data: {
-      projectId: project.id,
-      opportunityId: opportunity.id,
-      assumptionId: assumption.id,
-      title: "Guided onboarding checklist",
-      description: "Introduce a guided checklist to highlight value within the first session.",
-    },
-  });
-
-  const guidedExperiment = await prisma.experiment.create({
-    data: {
-      projectId: project.id,
-      opportunityId: opportunity.id,
-      solutionId: solution.id,
-      hypothesis: "Guided onboarding raises activation by 5%",
-      method: "In-product experiment",
-      status: "PLANNED",
-    },
-  });
-
-  const evidence = await prisma.evidence.create({
-    data: {
-      projectId: project.id,
-      experimentId: guidedExperiment.id,
-      type: "NOTE",
-      summary: "Baseline activation recorded for comparison",
-      details: { baselineActivation: 0.417 },
-    },
-  });
-
-  await prisma.discoveryTrace.createMany({
-    data: [
-      {
-        projectId: project.id,
-        fromType: "OUTCOME",
-        fromId: outcome.id,
-        toType: "HYPOTHESIS",
-        toId: hypothesis.id,
+  const opportunities = await prisma.$transaction([
+    prisma.opportunity.create({
+      data: {
+        description: "New accounts stall during onboarding",
+        segment: "Self-serve SMB",
+        severity: "HIGH",
+        status: "open",
       },
-      {
-        projectId: project.id,
-        fromType: "HYPOTHESIS",
-        fromId: hypothesis.id,
-        toType: "ASSUMPTION",
-        toId: assumption.id,
+    }),
+    prisma.opportunity.create({
+      data: {
+        description: "Admins struggle to invite teammates",
+        segment: "Mid-market",
+        severity: "MEDIUM",
+        status: "researching",
       },
-      {
-        projectId: project.id,
-        fromType: "ASSUMPTION",
-        fromId: assumption.id,
-        toType: "INTERVIEW",
-        toId: interview.id,
+    }),
+    prisma.opportunity.create({
+      data: {
+        description: "Power users need richer insights",
+        segment: "Enterprise",
+        severity: "HIGH",
+        status: "validated",
       },
-      {
-        projectId: project.id,
-        fromType: "INTERVIEW",
-        fromId: interview.id,
-        toType: "INSIGHT",
-        toId: interviewInsight.id,
-      },
-      {
-        projectId: project.id,
-        fromType: "INSIGHT",
-        fromId: interviewInsight.id,
-        toType: "OPPORTUNITY",
-        toId: opportunity.id,
-      },
-      {
-        projectId: project.id,
-        fromType: "OPPORTUNITY",
-        fromId: opportunity.id,
-        toType: "SOLUTION",
-        toId: solution.id,
-      },
-      {
-        projectId: project.id,
-        fromType: "SOLUTION",
-        fromId: solution.id,
-        toType: "EXPERIMENT",
-        toId: guidedExperiment.id,
-      },
-      {
-        projectId: project.id,
-        fromType: "EXPERIMENT",
-        fromId: guidedExperiment.id,
-        toType: "EVIDENCE",
-        toId: evidence.id,
-      },
-    ],
-    skipDuplicates: true,
-  });
+    }),
+  ]);
 
-  console.log({ org: org.name, project: project.name, outcome: outcome.title });
+  const solutions = await prisma.$transaction([
+    prisma.solution.create({
+      data: {
+        title: "Guided onboarding checklist",
+        description: "Step-by-step walkthrough highlighting aha moments",
+        status: "proposed",
+      },
+    }),
+    prisma.solution.create({
+      data: {
+        title: "Team invite nudges",
+        description: "In-product prompts + email reminders to add teammates",
+        status: "testing",
+      },
+    }),
+    prisma.solution.create({
+      data: {
+        title: "Executive insights dashboard",
+        description: "Curated KPI snapshots for leadership",
+        status: "discovery",
+      },
+    }),
+  ]);
+
+  const assumptions = await prisma.$transaction([
+    prisma.assumption.create({
+      data: {
+        statement: "New users want contextual guidance rather than self-discovery",
+        category: AssumptionCategory.DESIRABILITY,
+        riskLevel: ConfidenceLevel.MEDIUM,
+        status: "open",
+      },
+    }),
+    prisma.assumption.create({
+      data: {
+        statement: "Admins will invite teammates if we show ROI of collaboration",
+        category: AssumptionCategory.VIABILITY,
+        riskLevel: ConfidenceLevel.LOW,
+        status: "open",
+      },
+    }),
+    prisma.assumption.create({
+      data: {
+        statement: "Leaders need weekly summaries, not real-time dashboards",
+        category: AssumptionCategory.FEASIBILITY,
+        riskLevel: ConfidenceLevel.HIGH,
+        status: "validated",
+      },
+    }),
+  ]);
+
+  // Link outcomes to opportunities
+  const outcomeOpportunities = await prisma.$transaction([
+    prisma.outcomeOpportunity.create({
+      data: {
+        outcomeId: outcomes[0].id,
+        opportunityId: opportunities[0].id,
+        confidence: 0.3,
+        notes: "Based on activation analysis",
+      },
+    }),
+    prisma.outcomeOpportunity.create({
+      data: {
+        outcomeId: outcomes[0].id,
+        opportunityId: opportunities[1].id,
+        confidence: 0.5,
+        notes: "CS feedback + analytics",
+      },
+    }),
+    prisma.outcomeOpportunity.create({
+      data: {
+        outcomeId: outcomes[1].id,
+        opportunityId: opportunities[2].id,
+        confidence: 0.6,
+        notes: "Enterprise account interviews",
+      },
+    }),
+  ]);
+
+  // Link opportunities to solutions
+  const opportunitySolutions = await prisma.$transaction([
+    prisma.opportunitySolution.create({
+      data: {
+        opportunityId: opportunities[0].id,
+        solutionId: solutions[0].id,
+        confidence: 0.2,
+        notes: "Initial product trio shaping",
+      },
+    }),
+    prisma.opportunitySolution.create({
+      data: {
+        opportunityId: opportunities[1].id,
+        solutionId: solutions[1].id,
+        confidence: 0.45,
+        notes: "High completion in smoke tests",
+      },
+    }),
+    prisma.opportunitySolution.create({
+      data: {
+        opportunityId: opportunities[2].id,
+        solutionId: solutions[2].id,
+        confidence: 0.15,
+        notes: "Need validation",
+      },
+    }),
+  ]);
+
+  // Link solutions to assumptions
+  await prisma.$transaction([
+    prisma.solutionAssumption.create({
+      data: {
+        solutionId: solutions[0].id,
+        assumptionId: assumptions[0].id,
+        confidence: 0.25,
+        notes: "Interviews suggest guided flow desired",
+      },
+    }),
+    prisma.solutionAssumption.create({
+      data: {
+        solutionId: solutions[1].id,
+        assumptionId: assumptions[1].id,
+        confidence: 0.35,
+        notes: "Admins cite value of collaboration prompts",
+      },
+    }),
+    prisma.solutionAssumption.create({
+      data: {
+        solutionId: solutions[2].id,
+        assumptionId: assumptions[2].id,
+        confidence: 0.1,
+        notes: "Need to validate dashboard appetite",
+      },
+    }),
+  ]);
+
+  const hypotheses = await prisma.$transaction([
+    prisma.hypothesis.create({
+      data: {
+        statement: "If we add the checklist, guided users will activate 15% faster",
+        targetType: RelationshipType.OPPORTUNITY_SOLUTION,
+        opportunitySolutionId: opportunitySolutions[0].id,
+      },
+    }),
+    prisma.hypothesis.create({
+      data: {
+        statement: "Teammate invite nudges will grow active users per account",
+        targetType: RelationshipType.OUTCOME_OPPORTUNITY,
+        outcomeOpportunityId: outcomeOpportunities[1].id,
+      },
+    }),
+  ]);
+
+  const experiments = await prisma.$transaction([
+    prisma.experiment.create({
+      data: {
+        hypothesisId: hypotheses[0].id,
+        name: "High-fidelity onboarding prototype",
+        method: "usability_test",
+        status: "RUNNING",
+      },
+    }),
+    prisma.experiment.create({
+      data: {
+        hypothesisId: hypotheses[1].id,
+        name: "Nudge email A/B",
+        method: "ab_test",
+        status: "PLANNED",
+      },
+    }),
+  ]);
+
+  await prisma.$transaction([
+    prisma.insight.create({
+      data: {
+        experimentId: experiments[0].id,
+        relationshipType: RelationshipType.OPPORTUNITY_SOLUTION,
+        opportunitySolutionId: opportunitySolutions[0].id,
+        validationState: ValidationState.SUPPORTS,
+        confidenceLevel: ConfidenceLevel.HIGH,
+        statement: "Prototype users completed onboarding 40% faster",
+        evidenceSummary: "5/6 participants reached success in <8 minutes",
+        sourceTypes: ["interview", "usability_test"],
+        tags: ["onboarding", "activation"],
+        lifecycleStage: LifecycleStage.VALIDATED,
+      },
+    }),
+    prisma.insight.create({
+      data: {
+        experimentId: experiments[1].id,
+        relationshipType: RelationshipType.OUTCOME_OPPORTUNITY,
+        outcomeOpportunityId: outcomeOpportunities[1].id,
+        validationState: ValidationState.INCONCLUSIVE,
+        confidenceLevel: ConfidenceLevel.MEDIUM,
+        statement: "Invite nudges generated a small lift but needs more data",
+        evidenceSummary: "Test ran for 5 days, sample size too small",
+        sourceTypes: ["ab_test"],
+        tags: ["retention", "growth"],
+        lifecycleStage: LifecycleStage.DISCOVERED,
+      },
+    }),
+  ]);
+
+  console.log("✅ Seed complete.");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
